@@ -12,12 +12,13 @@ import threading
 import re
 import logging
 import logging.handlers
+from StringIO import StringIO
 
 #----------------------------------------------------
 # Global Configuration Variables
 #----------------------------------------------------
 filterString = "apple,BMC"
-LOG_FILENAME = "/home/pbeavers/EsTwitterAdapter.log"
+LOG_FILENAME = "/home/pbeavers/EsTwitterAdapter/EsTwitterAdapter.log"
 consumer_key = "xPvkJIWwnsNPvC4jshG94aOkt"
 consumer_secret = "UgsCptyim8DCRE9a8zjyXI1wnhWPfDCkJMZnlscddOiSVTjFxM"
 access_token_key = "160202734-YXkLuLlq9B1qXsulB59RLKAUvfBzU4TQ37WtRO9j"
@@ -72,27 +73,40 @@ class CustomStreamListener(tweepy.StreamListener):
     #--------------------------------------------------
     # Raise event function to post events to Pulse
     #--------------------------------------------------
-    def raiseEvent(self, tweetText, userName):
+    def raiseEvent(self, tweetText, userName, uniqueId):
 
         headers = ['Expect:', 'Content-Type: application/json']
         url =  "https://api.truesight.bmc.com/v1/events"
 
         newEvent = {
+                "uniqueID": uniqueId,
                 "tweetText": tweetText,
                 "tweetUser": userName
                 }
 
-        print newEvent
-        # c= pycurl.Curl()
-        # c.setopt(pycurl.URL, url)
-        # c.setopt(pycurl.HTTPHEADER,headers )
-        # c.setopt(pycurl.CUSTOMREQUEST, "POST")
-        # c.setopt(pycurl.USERPWD, userPwd)
-        # c.setopt(pycurl.WRITEFUNCTION, lambda x: None)
-        # data = json.dumps(newEvent)
-        # c.setopt(pycurl.POSTFIELDS,data)
-        # c.perform()
-        # c.close()
+        buffer = StringIO()
+        c = pycurl.Curl()
+
+        strID = str(uniqueId)
+        url = 'http://localhost:9200/twitter/tweet/' + strID
+        headers = ['Expect:', 'Content-Type: application/json']
+
+        c.setopt(pycurl.HTTPHEADER,headers )
+        c.setopt(pycurl.URL, url)
+        data = json.dumps(newEvent)
+        c.setopt(pycurl.POSTFIELDS,data)
+        c.setopt(c.WRITEDATA, buffer)
+
+
+        try:
+           c.perform()
+           http_code = c.getinfo(pycurl.HTTP_CODE)
+           self.mlog.debug("status code: %s" % http_code)
+        except Exception, e:
+           self.mlog.warning(e)
+        c.close()
+
+        body = buffer.getvalue()
 
     #---------------------------------------------------
     # Call back for RaiseEvent
@@ -112,6 +126,7 @@ class CustomStreamListener(tweepy.StreamListener):
         self.mlog.debug("__init__() for CustomStreamListener.")
 
 	self.mlog.debug("Hello world")
+        self.seed_uid = int(time.time())
 
     #--------------------------------------------------------------------------
     # Our main processing object is a sublass of Tweepy's stream listener
@@ -138,7 +153,8 @@ class CustomStreamListener(tweepy.StreamListener):
              decode_user = decoded_user.decode('string_escape')
 
              self.tweetCounter = self.tweetCounter + 1
-             self.pool.add_task(self.raiseEvent,decoded_string,decoded_user)
+             self.seed_uid = self.seed_uid + 1
+             self.pool.add_task(self.raiseEvent,decoded_string,decoded_user, self.seed_uid)
 
     def on_error(self, status_code):
         self.mlog.warning("Received on_error call back")
@@ -166,8 +182,6 @@ auth.set_access_token(access_token_key, access_token_secret)
 sapi = tweepy.streaming.Stream(auth, CustomStreamListener())
 
 filterArray = filterString.split(",")
-print  filterString
-
 
 sapi.filter(track=filterArray, languages=["en"])
 

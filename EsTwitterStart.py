@@ -19,10 +19,10 @@ class EsTwitterStart():
         self.pidfile_timeout = 5
 
     def run(self):
-        self.proc = subprocess.Popen(["/home/pbeavers/work/evtweet/bin/EsTwitterAdapter.py"])
+        self.proc = subprocess.Popen(["/home/pbeavers/EsTwitterAdapter/EsTwitterAdapter.py"])
         while True:
             if self.proc.poll() is not None:
-                self.proc = subprocess.Popen(["/home/pbeavers/work/evtweet/bin/EsTwitterAdapter.py"])
+                self.proc = subprocess.Popen(["/home/pbeavers/EsTwitterAdapter/EsTwitterAdapter.py"])
             time.sleep(5)
 
     def handle_exit(self, signum, frame):
@@ -55,10 +55,10 @@ if daemonMode == 1:
     daemon_runner = runner.DaemonRunner(app)
     daemon_runner.do_action()
 else:
-    proc = subprocess.Popen(["/home/pbeavers/work/evtweet/bin/EsTwitterAdapter.py"])
+    proc = subprocess.Popen(["/home/pbeavers/EsTwitterAdapter/EsTwitterAdapter.py"])
     while True:
         if proc.poll() is not None:
-            proc = subprocess.Popen(["/home/pbeavers/work/evtweet/bin/EsTwitterAdapter.py"])
+            proc = subprocess.Popen(["/home/pbeavers/EsTwitterAdapter/EsTwitterAdapter.py"])
         time.sleep(5)
 
 
