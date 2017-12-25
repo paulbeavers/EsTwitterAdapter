@@ -13,6 +13,7 @@ import re
 import logging
 import logging.handlers
 from StringIO import StringIO
+import uuid
 
 #----------------------------------------------------
 # Global Configuration Variables
@@ -77,9 +78,9 @@ class CustomStreamListener(tweepy.StreamListener):
 
         headers = ['Expect:', 'Content-Type: application/json']
         url =  "https://api.truesight.bmc.com/v1/events"
+        strID = uuid.uuid4().hex
 
         newEvent = {
-                "uniqueID": uniqueId,
                 "tweetText": tweetText,
                 "tweetUser": userName
                 }
@@ -87,7 +88,6 @@ class CustomStreamListener(tweepy.StreamListener):
         buffer = StringIO()
         c = pycurl.Curl()
 
-        strID = str(uniqueId)
         url = 'http://localhost:9200/twitter/tweet/' + strID
         headers = ['Expect:', 'Content-Type: application/json']
 
@@ -126,7 +126,8 @@ class CustomStreamListener(tweepy.StreamListener):
         self.mlog.debug("__init__() for CustomStreamListener.")
 
 	self.mlog.debug("Hello world")
-        self.seed_uid = int(time.time())
+        # self.seed_uid = int(time.time())
+        self.seed_uid = 1000
 
     #--------------------------------------------------------------------------
     # Our main processing object is a sublass of Tweepy's stream listener
