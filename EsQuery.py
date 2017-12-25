@@ -41,7 +41,7 @@ try:
    c.perform()
    http_code = c.getinfo(pycurl.HTTP_CODE)
 except Exception, e:
-   self.mlog.warning(e)
+   print e
    c.close()
 
 body = json.loads(buffer.getvalue())
